@@ -132,6 +132,10 @@ func NewModel(templates []template.Template) Model {
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)
 	l.Styles.Title = titleStyle
+
+	// Disable the default "enter to apply filter" help text
+	l.KeyMap.AcceptWhileFiltering.SetEnabled(false)
+
 	l.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			keys.Toggle,
@@ -158,12 +162,67 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, keys.Quit):
+		// When filtering is active
+		if m.list.FilterState() == list.Filtering {
+			// Esc key clears the filter (don't quit)
+			if msg.String() == "esc" {
+				m.list.ResetFilter()
+				return m, nil
+			}
+			// Let the list handle the filter input
+			var cmd tea.Cmd
+			m.list, cmd = m.list.Update(msg)
+			return m, cmd
+		}
+
+		// Handle quit (only when not filtering)
+		if key.Matches(msg, keys.Quit) {
 			m.quitting = true
 			m.cancelled = true
 			return m, tea.Quit
+		}
 
+		// When filter is applied but not actively typing
+		if m.list.FilterState() == list.FilterApplied {
+			// Handle space or tab for toggle selection even with filter applied
+			if msg.String() == " " || msg.String() == "tab" {
+				if idx := m.list.Index(); idx >= 0 && idx < len(m.list.VisibleItems()) {
+					// Find the actual item in the full list
+					visibleItem, ok := m.list.VisibleItems()[idx].(item)
+					if ok {
+						for i := range m.items {
+							if m.items[i].template.Name == visibleItem.template.Name {
+								m.items[i].selected = !m.items[i].selected
+								m.selected[i] = m.items[i].selected
+
+								// Update all list items
+								items := make([]list.Item, len(m.items))
+								for j := range m.items {
+									items[j] = m.items[j]
+								}
+								m.list.SetItems(items)
+								break
+							}
+						}
+					}
+				}
+				return m, nil
+			}
+
+			// Handle confirm
+			if key.Matches(msg, keys.Confirm) {
+				m.quitting = true
+				return m, tea.Quit
+			}
+
+			// Let list handle other keys (arrow keys, etc.)
+			var cmd tea.Cmd
+			m.list, cmd = m.list.Update(msg)
+			return m, cmd
+		}
+
+		// Normal mode (no filter)
+		switch {
 		case key.Matches(msg, keys.Confirm):
 			m.quitting = true
 			return m, tea.Quit
@@ -194,9 +253,16 @@ func (m Model) View() string {
 		return ""
 	}
 
-	help := helpStyle.Render(
-		"space/tab: toggle • enter: confirm • esc: quit",
-	)
+	var help string
+	if m.list.FilterState() == list.Filtering || m.list.FilterState() == list.FilterApplied {
+		help = helpStyle.Render(
+			"space/tab: toggle • esc: clear filter • enter: confirm",
+		)
+	} else {
+		help = helpStyle.Render(
+			"space/tab: toggle • /: filter • enter: confirm • esc: quit",
+		)
+	}
 
 	return m.list.View() + "\n" + help
 }
