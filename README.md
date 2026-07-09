@@ -15,7 +15,7 @@
 ## Installation
 
 ```bash
-go install github.com/mather/igt@latest
+go install github.com/mather/igt/cmd/igt@latest
 ```
 
 Or build from source:
