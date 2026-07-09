@@ -14,11 +14,20 @@
 
 ## Installation
 
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap mather/igt
+brew install igt
+```
+
+### Go Install
+
 ```bash
 go install github.com/mather/igt/cmd/igt@latest
 ```
 
-Or build from source:
+### Build from source
 
 ```bash
 git clone https://github.com/mather/igt.git

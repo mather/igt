@@ -13,7 +13,12 @@ import (
 	"github.com/mather/igt/internal/ui"
 )
 
-const version = "0.1.0"
+var (
+	// These variables are set by GoReleaser at build time
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 var (
 	outputPath = flag.String("o", ".gitignore", "output file path")
@@ -60,6 +65,8 @@ func main() {
 
 	if *showVersion {
 		fmt.Printf("igt version %s\n", version)
+		fmt.Printf("  commit: %s\n", commit)
+		fmt.Printf("  built:  %s\n", date)
 		os.Exit(0)
 	}
 
