@@ -1,0 +1,77 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: igt
+    main: ./cmd/igt
+    binary: igt
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+
+brews:
+  - name: igt
+    repository:
+      owner: mather
+      name: homebrew-igt
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    folder: Formula
+    homepage: https://github.com/mather/igt
+    description: "Interactive gitignore CLI - TUI-based .gitignore template manager"
+    license: MIT
+    test: |
+      system "#{bin}/igt", "--version"
+    install: |
+      bin.install "igt"
+
+release:
+  github:
+    owner: mather
+    name: igt
+  draft: false
+  prerelease: auto
+  mode: replace
+  name_template: "{{.ProjectName}}-v{{.Version}}"
+  header: |
+    ## Changes in v{{.Version}}
