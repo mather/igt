@@ -49,7 +49,7 @@ changelog:
       - "^chore:"
       - "^ci:"
 
-brews:
+homebrew_casks:
   - name: igt
     repository:
       owner: mather
@@ -58,14 +58,9 @@ brews:
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    directory: Formula
+    directory: Casks
     homepage: https://github.com/mather/igt
     description: "Interactive gitignore CLI - TUI-based .gitignore template manager"
-    license: MIT
-    test: |
-      system "#{bin}/igt", "--version"
-    install: |
-      bin.install "igt"
 
 release:
   github:
