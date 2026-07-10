@@ -186,6 +186,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.list.FilterState() == list.FilterApplied {
 			// Handle space or tab for toggle selection even with filter applied
 			if msg.String() == " " || msg.String() == "tab" {
+				var cmd tea.Cmd
 				if idx := m.list.Index(); idx >= 0 && idx < len(m.list.VisibleItems()) {
 					// Find the actual item in the full list
 					visibleItem, ok := m.list.VisibleItems()[idx].(item)
@@ -200,13 +201,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								for j := range m.items {
 									items[j] = m.items[j]
 								}
-								m.list.SetItems(items)
+								cmd = m.list.SetItems(items)
 								break
 							}
 						}
 					}
 				}
-				return m, nil
+				return m, cmd
 			}
 
 			// Handle confirm
